@@ -1,0 +1,28 @@
+name: release-preview
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "3.1.x"
+
+      - name: Set current date as env variable
+        run: echo "NOW=$(date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_ENV
+        # --version-suffix does not seem to like _ and :
+      - name: Set Package pre-release suffix
+        run: echo "SUFFIX=${{ format('prerelease-{0}-{1}', env.NOW, github.sha) }}" >> $GITHUB_ENV
+      - name: AddSource
+        run: dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github
+      - name: Pack
+        run: dotnet pack --configuration Release --version-suffix $SUFFIX
+        # if --version-suffix is supplied an empty string the VersionPrefix will be the only one used
+      - name: Publish
+        run: dotnet nuget push bin/Release/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source "github"

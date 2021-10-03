@@ -1,0 +1,30 @@
+# Build the library
+# The on: block of a workflow file defines the trigger conditions; the pull_request block added instructs GitHub Actions to run the workflow
+# whenever a Pull Request (PR) is created that targets the main branch, or, whenever additional commits are pushed to those PRs. Instead of
+# pushing the commit to the main branch, if you create and push a new branch for it, and create a PR for the new branch, you should see the
+# workflow running and shown as a successful check when complete.
+# Ref : https://acraven.medium.com/a-nuget-package-workflow-using-github-actions-7da8c6557863
+name: ci
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "3.1.x"
+
+      - name: Build
+        run: dotnet build --configuration Release
+      # An additional test step can be added when applicable
